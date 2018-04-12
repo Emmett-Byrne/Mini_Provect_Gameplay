@@ -22,7 +22,7 @@ GLint	positionID,	// Position ID
 		colorID,	// Color ID
 		textureID,	// Texture ID
 		uvID,		// UV ID
-		mvpID,		// Model View Projection ID
+		mvpID[2],		// Model View Projection ID
 		x_offsetID, // X offset ID
 		y_offsetID,	// Y offset ID
 		z_offsetID;	// Z offset ID
@@ -39,8 +39,10 @@ int comp_count;					// Component of texture
 
 unsigned char* img_data;		// image data
 
-mat4 mvp, projection, 
-		view, model;			// Model View Projection
+mat4	mvp, mvp2,
+		projection, 
+		view, model,
+		model2;			// Model View Projection
 
 Font font;						// Game font
 
@@ -161,14 +163,14 @@ void Game::run()
 			{
 				// Set Model Rotation
 				model = rotate(model, -0.01f, glm::vec3(1, 0, 0)); // Rotate
-				model = translate(model, glm::vec3(-1, 0, 0));
+				model2 = translate(model2, glm::vec3(-1, 0, 0));
 			}
 
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
 			{
 				// Set Model Rotation
 				model = rotate(model, 0.01f, glm::vec3(1, 0, 0)); // Rotate
-				model = translate(model, glm::vec3(1, 0, 0));
+				model2 = translate(model2, glm::vec3(1, 0, 0));
 			}
 
 			if (animate)
@@ -187,7 +189,6 @@ void Game::run()
 	DEBUG_MSG("Calling Cleanup...");
 #endif
 	unload();
-
 }
 
 void Game::initialize()
@@ -210,13 +211,16 @@ void Game::initialize()
 	glGenBuffers(1, &vbo);		// Generate Vertex Buffer
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
+
 	// Vertices (3) x,y,z , Colors (4) RGBA, UV/ST (2)
+	glBufferData(GL_ARRAY_BUFFER, ((3 * VERTICES) + (4 * COLORS) + (2 * UVS)) * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
 	glBufferData(GL_ARRAY_BUFFER, ((3 * VERTICES) + (4 * COLORS) + (2 * UVS)) * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
 
 	glGenBuffers(1, &vib); //Generate Vertex Index Buffer
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vib);
 
 	// Indices to be drawn
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * INDICES * sizeof(GLuint), indices, GL_STATIC_DRAW);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3 * INDICES * sizeof(GLuint), indices, GL_STATIC_DRAW);
 
 	// NOTE: uniforms values must be used within Shader so that they 
@@ -386,6 +390,7 @@ void Game::update()
 	// For mutiple objects (cubes) create multiple models
 	// To alter Camera modify view & projection
 	mvp = projection * view * model;
+	mvp2 = projection * view * model2;
 
 	DEBUG_MSG(model[0].x);
 	DEBUG_MSG(model[0].y);
@@ -448,8 +453,8 @@ void Game::render()
 	textureID = glGetUniformLocation(progID, "f_texture");
 	if (textureID < 0) { DEBUG_MSG("textureID not found"); }
 
-	mvpID = glGetUniformLocation(progID, "sv_mvp");
-	if (mvpID < 0) { DEBUG_MSG("mvpID not found"); }
+	mvpID[0] = glGetUniformLocation(progID, "sv_mvp");
+	if (mvpID[0] < 0) { DEBUG_MSG("mvpID not found"); }
 
 	x_offsetID = glGetUniformLocation(progID, "sv_x_offset");
 	if (x_offsetID < 0) { DEBUG_MSG("x_offsetID not found"); }
@@ -466,7 +471,7 @@ void Game::render()
 	glBufferSubData(GL_ARRAY_BUFFER, ((3 * VERTICES) + (4 * COLORS)) * sizeof(GLfloat), 2 * UVS * sizeof(GLfloat), uvs);
 
 	// Send transformation to shader mvp uniform [0][0] is start of array
-	glUniformMatrix4fv(mvpID, 1, GL_FALSE, &mvp[0][0]);
+	glUniformMatrix4fv(mvpID[0], 1, GL_FALSE, &mvp[0][0]);
 
 	// Set Active Texture .... 32 GL_TEXTURE0 .... GL_TEXTURE31
 	glActiveTexture(GL_TEXTURE0);
@@ -491,6 +496,15 @@ void Game::render()
 
 	// Draw Element Arrays
 	glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
+
+
+	//----------------------draw shit here----------------------
+	glBufferSubData(GL_ARRAY_BUFFER, 0 * VERTICES * sizeof(GLfloat), 3 * VERTICES * sizeof(GLfloat), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, 3 * VERTICES * sizeof(GLfloat), 4 * COLORS * sizeof(GLfloat), colors);
+	glBufferSubData(GL_ARRAY_BUFFER, ((3 * VERTICES) + (4 * COLORS)) * sizeof(GLfloat), 2 * UVS * sizeof(GLfloat), uvs);
+	glUniformMatrix4fv(mvpID[1], 1, GL_FALSE, &mvp2[0][0]);
+	glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
+
 	window.display();
 
 	// Disable Arrays
