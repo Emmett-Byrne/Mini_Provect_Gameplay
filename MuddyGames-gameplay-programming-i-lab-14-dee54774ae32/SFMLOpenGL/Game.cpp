@@ -22,13 +22,17 @@ GLint	positionID,	// Position ID
 		colorID,	// Color ID
 		textureID,	// Texture ID
 		uvID,		// UV ID
-		mvpID[2],		// Model View Projection ID
+		/*mvpID,*/		// Model View Projection ID
 		x_offsetID, // X offset ID
 		y_offsetID,	// Y offset ID
 		z_offsetID;	// Z offset ID
 
 GLenum	error;		// OpenGL Error Code
 
+Entity player;
+Entity goal;
+Entity npc1;
+Entity npc2;
 
 //Please see .//Assets//Textures// for more textures
 const string filename = ".//Assets//Textures//grid_wip.tga";
@@ -39,10 +43,9 @@ int comp_count;					// Component of texture
 
 unsigned char* img_data;		// image data
 
-mat4	mvp, mvp2,
+mat4	/*mvp,*/
 		projection, 
-		view, model,
-		model2;			// Model View Projection
+		view/*, model*/;			// Model View Projection
 
 Font font;						// Game font
 
@@ -82,104 +85,120 @@ void Game::run()
 		DEBUG_MSG("Game running...");
 #endif
 
+		if (lives < 1)
+		{
+			isRunning = false;
+		}
+
 		while (window.pollEvent(event))
 		{
-			if (event.type == Event::Closed)
+			if (event.type == Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
 			{
 				isRunning = false;
 			}
 
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+			//if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+			//{
+			//	// Set Model Rotation
+			//	if (!animate)
+			//	{
+			//		animate = true;
+			//		if (rotation < 0)
+			//			rotation *= -1; // Set Positive
+			//		animation = glm::vec3(0, 1, 0); //Rotate Y
+			//	}
+			//}
+
+			//if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+			//{
+			//	// Set Model Rotation
+			//	if (!animate)
+			//	{
+			//		animate = true;
+			//		if (rotation >= 0)
+			//			rotation *= -1; // Set Negative
+			//		animation = glm::vec3(0, 1, 0); //Rotate Y
+			//	}
+
+			//	// https://www.sfml-dev.org/documentation/2.0/classsf_1_1Clock.php
+			//	// https://github.com/acron0/Easings
+			//	// http://robotacid.com/documents/code/Easing.cs
+			//	// http://st33d.tumblr.com/post/94243475686/easing-equations-for-unity-c
+			//	// http://easings.net/
+			//	// http://upshots.org/actionscript/jsas-understanding-easing
+			//	// https://www.kirupa.com/html5/animating_with_easing_functions_in_javascript.htm
+			//	// https://medium.com/motion-in-interaction/animation-principles-in-ui-design-understanding-easing-bea05243fe3#.svh4gczav
+			//	// http://thednp.github.io/kute.js/easing.html
+			//	// http://gizma.com/easing/#quad1
+			//	// https://github.com/warrenm/AHEasing
+
+			//	// VR
+			//	// https://www.sfml-dev.org/documentation/2.4.2/classsf_1_1Sensor.php
+			//	// http://en.sfml-dev.org/forums/index.php?topic=9412.msg65594
+			//	// https://github.com/SFML/SFML/wiki/Tutorial:-Building-SFML-for-Android-on-Windows
+			//	// https://github.com/SFML/SFML/wiki/Tutorial:-Building-SFML-for-Android
+			//	// https://www.youtube.com/watch?v=n_JSi6ihDFs
+			//	// http://en.sfml-dev.org/forums/index.php?topic=8010.0
+			//	// 
+
+			//	/*
+			//	// Set Model Rotation
+			//	// t = time, b = startvalue, c = change in value, d = duration:
+
+			//	time = clock.getElapsedTime();
+			//	std::cout << time.asSeconds() << std::endl;
+			//	float original = 0.001f;
+			//	float destination = 0.05f;
+
+			//	float factor, temp;
+
+			//	for (int t = 0; t < 5.0f; t++)
+			//	{
+			//	factor = gpp::Easing::easeIn(t, original, 0.00001f, 5.0f);
+			//	cout << "Factor : " << factor << endl;
+			//	}
+
+
+			//	factor = gpp::Easing::easeIn(time.asMilliseconds(), original, 0.00001f, 5.0f);
+			//	cout << "Factor : " << factor << endl;
+			//	temp = original + ((destination - original) * factor);
+			//	cout << "Temp : " << factor << endl;
+			//	model = rotate(model, temp, glm::vec3(0, 1, 0)); // Rotate
+			//	*/
+			//}
+
+			if ((sf::Keyboard::isKeyPressed(sf::Keyboard::Left) || sf::Keyboard::isKeyPressed(sf::Keyboard::A)) && !isFiring)
 			{
 				// Set Model Rotation
-				if (!animate)
-				{
-					animate = true;
-					if (rotation < 0)
-						rotation *= -1; // Set Positive
-					animation = glm::vec3(0, 1, 0); //Rotate Y
-				}
+				goal.rotate(vec3(-0.01f, 0, 0));
+				//model2 = translate(model2, glm::vec3(-1, 0, 0));
+				player.move(vec3(-1, 0, 0));
 			}
 
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
+			if ((sf::Keyboard::isKeyPressed(sf::Keyboard::Right) || sf::Keyboard::isKeyPressed(sf::Keyboard::D))&& !isFiring)
 			{
 				// Set Model Rotation
-				if (!animate)
-				{
-					animate = true;
-					if (rotation >= 0)
-						rotation *= -1; // Set Negative
-					animation = glm::vec3(0, 1, 0); //Rotate Y
-				}
+				goal.rotate(vec3(0.01f, 0, 0));
+				player.move(vec3(1, 0, 0));
+			}
 
-				// https://www.sfml-dev.org/documentation/2.0/classsf_1_1Clock.php
-				// https://github.com/acron0/Easings
-				// http://robotacid.com/documents/code/Easing.cs
-				// http://st33d.tumblr.com/post/94243475686/easing-equations-for-unity-c
-				// http://easings.net/
-				// http://upshots.org/actionscript/jsas-understanding-easing
-				// https://www.kirupa.com/html5/animating_with_easing_functions_in_javascript.htm
-				// https://medium.com/motion-in-interaction/animation-principles-in-ui-design-understanding-easing-bea05243fe3#.svh4gczav
-				// http://thednp.github.io/kute.js/easing.html
-				// http://gizma.com/easing/#quad1
-				// https://github.com/warrenm/AHEasing
-
-				// VR
-				// https://www.sfml-dev.org/documentation/2.4.2/classsf_1_1Sensor.php
-				// http://en.sfml-dev.org/forums/index.php?topic=9412.msg65594
-				// https://github.com/SFML/SFML/wiki/Tutorial:-Building-SFML-for-Android-on-Windows
-				// https://github.com/SFML/SFML/wiki/Tutorial:-Building-SFML-for-Android
-				// https://www.youtube.com/watch?v=n_JSi6ihDFs
-				// http://en.sfml-dev.org/forums/index.php?topic=8010.0
-				// 
-
-				/*
-				// Set Model Rotation
-				// t = time, b = startvalue, c = change in value, d = duration:
-
-				time = clock.getElapsedTime();
-				std::cout << time.asSeconds() << std::endl;
-				float original = 0.001f;
-				float destination = 0.05f;
-
-				float factor, temp;
-
-				for (int t = 0; t < 5.0f; t++)
-				{
-				factor = gpp::Easing::easeIn(t, original, 0.00001f, 5.0f);
-				cout << "Factor : " << factor << endl;
-				}
-
-
-				factor = gpp::Easing::easeIn(time.asMilliseconds(), original, 0.00001f, 5.0f);
-				cout << "Factor : " << factor << endl;
-				temp = original + ((destination - original) * factor);
-				cout << "Temp : " << factor << endl;
-				model = rotate(model, temp, glm::vec3(0, 1, 0)); // Rotate
-				*/
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space) && !isFiring)
+			{
+				isFiring = true;
 			}
 
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 			{
-				// Set Model Rotation
-				model = rotate(model, -0.01f, glm::vec3(1, 0, 0)); // Rotate
-				model2 = translate(model2, glm::vec3(-1, 0, 0));
+				std::cout << rand() % 3 + 1 << std::endl;
 			}
 
-			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
-			{
-				// Set Model Rotation
-				model = rotate(model, 0.01f, glm::vec3(1, 0, 0)); // Rotate
-				model2 = translate(model2, glm::vec3(1, 0, 0));
-			}
-
-			if (animate)
-			{
-				rotation += (1.0f * rotation) + 0.05f;
-				model = rotate(model, 0.01f, animation); // Rotate
-				rotation = 0.0f;
-				animate = false;
-			}
+			//if (animate)
+			//{
+			//	rotation += (1.0f * rotation) + 0.05f;
+			//	//model = rotate(model, 0.01f, animation); // Rotate
+			//	rotation = 0.0f;
+			//	animate = false;
+			//}
 		}
 		update();
 		render();
@@ -193,6 +212,13 @@ void Game::run()
 
 void Game::initialize()
 {
+	srand(std::time(NULL));
+
+	player.setLocation(vec3(0, -3, 0));
+	goal.setLocation(vec3(0, -3, -15));
+	npc1.setLocation(vec3(-7, -3, -15));
+	npc2.setLocation(vec3(7, -3, -15));
+
 	isRunning = true;
 	GLint isCompiled = 0;
 	GLint isLinked = 0;
@@ -368,9 +394,9 @@ void Game::initialize()
 		);
 
 	// Model matrix
-	model = mat4(
-		1.0f					// Identity Matrix
-		);
+	//model = mat4(
+	//	1.0f					// Identity Matrix
+	//	);
 
 	// Enable Depth Test
 	glEnable(GL_DEPTH_TEST);
@@ -389,12 +415,48 @@ void Game::update()
 	// Update Model View Projection
 	// For mutiple objects (cubes) create multiple models
 	// To alter Camera modify view & projection
-	mvp = projection * view * model;
-	mvp2 = projection * view * model2;
+	//mvp = projection * view * model;
 
-	DEBUG_MSG(model[0].x);
-	DEBUG_MSG(model[0].y);
-	DEBUG_MSG(model[0].z);
+	goal.rotate(vec3(-0.001f, 0.005f, 0.002f));
+	npc1.rotate(vec3(-0.003f, -0.004f, 0.002f));
+	npc2.rotate(vec3(0.002f, 0.001f, -0.004f));
+
+	if (isFiring)
+	{
+		player.move(vec3(0, 0, -0.02f));
+
+		if (player.getLocation().z < -20)
+		{
+			player.setLocation(vec3(0, -3, 0));
+			isFiring = false;
+		}
+
+		if (player.getLocation().x <= -6 && player.getLocation().x >= -8 && player.getLocation().z <= -14 && player.getLocation().z >= -16)
+		{
+			hit(1);
+		}
+					
+		if (player.getLocation().x <= 1 && player.getLocation().x >= -1 && player.getLocation().z <= -14 && player.getLocation().z >= -16)
+		{
+			hit(2);
+		}
+								
+		if (player.getLocation().x <= 8 && player.getLocation().x >= 6 && player.getLocation().z <= -14 && player.getLocation().z >= -16)
+		{
+			hit(3);
+		}
+	}
+
+	player.update(projection, view);
+	goal.update(projection, view);
+	npc1.update(projection, view);
+	npc2.update(projection, view);
+
+	//system("CLS");
+
+	/*DEBUG_MSG(model[3].x);
+	DEBUG_MSG(model[3].y);
+	DEBUG_MSG(model[3].z);*/
 }
 
 void Game::render()
@@ -414,10 +476,10 @@ void Game::render()
 	int x = Mouse::getPosition(window).x;
 	int y = Mouse::getPosition(window).y;
 
-	string hud = "Heads Up Display ["
-		+ string(toString(x))
-		+ "]["
-		+ string(toString(y))
+	string hud = "Lives["
+		+ string(toString(lives))
+		+ "] Score["
+		+ string(toString(score))
 		+ "]";
 
 	Text text(hud, font);
@@ -453,8 +515,12 @@ void Game::render()
 	textureID = glGetUniformLocation(progID, "f_texture");
 	if (textureID < 0) { DEBUG_MSG("textureID not found"); }
 
-	mvpID[0] = glGetUniformLocation(progID, "sv_mvp");
-	if (mvpID[0] < 0) { DEBUG_MSG("mvpID not found"); }
+	// = glGetUniformLocation(progID, "sv_mvp");
+	player.setID(glGetUniformLocation(progID, "sv_mvp"));
+	goal.setID(glGetUniformLocation(progID, "sv_mvp"));
+	npc1.setID(glGetUniformLocation(progID, "sv_mvp"));
+	npc2.setID(glGetUniformLocation(progID, "sv_mvp"));
+	//if (mvpID < 0) { DEBUG_MSG("mvpID not found"); }
 
 	x_offsetID = glGetUniformLocation(progID, "sv_x_offset");
 	if (x_offsetID < 0) { DEBUG_MSG("x_offsetID not found"); }
@@ -465,45 +531,15 @@ void Game::render()
 	z_offsetID = glGetUniformLocation(progID, "sv_z_offset");
 	if (z_offsetID < 0) { DEBUG_MSG("z_offsetID not found"); };
 
-	// VBO Data....vertices, colors and UV's appended
-	glBufferSubData(GL_ARRAY_BUFFER, 0 * VERTICES * sizeof(GLfloat), 3 * VERTICES * sizeof(GLfloat), vertices);
-	glBufferSubData(GL_ARRAY_BUFFER, 3 * VERTICES * sizeof(GLfloat), 4 * COLORS * sizeof(GLfloat), colors);
-	glBufferSubData(GL_ARRAY_BUFFER, ((3 * VERTICES) + (4 * COLORS)) * sizeof(GLfloat), 2 * UVS * sizeof(GLfloat), uvs);
-
-	// Send transformation to shader mvp uniform [0][0] is start of array
-	glUniformMatrix4fv(mvpID[0], 1, GL_FALSE, &mvp[0][0]);
-
-	// Set Active Texture .... 32 GL_TEXTURE0 .... GL_TEXTURE31
-	glActiveTexture(GL_TEXTURE0);
-	glUniform1i(textureID, 0); // 0 .... 31
-
-	// Set the X, Y and Z offset (this allows for multiple cubes via different shaders)
-	// Experiment with these values to change screen positions
-	glUniform1f(x_offsetID, 0.00f);
-	glUniform1f(y_offsetID, 0.00f);
-	glUniform1f(z_offsetID, 0.00f);
-
-	// Set pointers for each parameter (with appropriate starting positions)
-	// https://www.khronos.org/opengles/sdk/docs/man/xhtml/glVertexAttribPointer.xml
-	glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glVertexAttribPointer(colorID, 4, GL_FLOAT, GL_FALSE, 0, (VOID*)(3 * VERTICES * sizeof(GLfloat)));
-	glVertexAttribPointer(uvID, 2, GL_FLOAT, GL_FALSE, 0, (VOID*)(((3 * VERTICES) + (4 * COLORS)) * sizeof(GLfloat)));
-	
-	// Enable Arrays
-	glEnableVertexAttribArray(positionID);
-	glEnableVertexAttribArray(colorID);
-	glEnableVertexAttribArray(uvID);
-
-	// Draw Element Arrays
-	glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
-
-
 	//----------------------draw shit here----------------------
-	glBufferSubData(GL_ARRAY_BUFFER, 0 * VERTICES * sizeof(GLfloat), 3 * VERTICES * sizeof(GLfloat), vertices);
-	glBufferSubData(GL_ARRAY_BUFFER, 3 * VERTICES * sizeof(GLfloat), 4 * COLORS * sizeof(GLfloat), colors);
-	glBufferSubData(GL_ARRAY_BUFFER, ((3 * VERTICES) + (4 * COLORS)) * sizeof(GLfloat), 2 * UVS * sizeof(GLfloat), uvs);
-	glUniformMatrix4fv(mvpID[1], 1, GL_FALSE, &mvp2[0][0]);
-	glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
+	//drawCube(mvpID, mvp);
+	drawCube(player.getID(), player.getmvp(), colors);
+	drawCube(goal.getID(), goal.getmvp(), colorsGoal);
+	drawCube(npc1.getID(), npc1.getmvp(), colors);
+	drawCube(npc2.getID(), npc2.getmvp(), colors);
+
+
+
 
 	window.display();
 
@@ -541,3 +577,121 @@ void Game::unload()
 	stbi_image_free(img_data);		// Free image stbi_image_free(..)
 }
 
+void Game::drawCube(GLint ID, mat4 mvp, const GLfloat color[])
+{
+	glBufferSubData(GL_ARRAY_BUFFER, 0 * VERTICES * sizeof(GLfloat), 3 * VERTICES * sizeof(GLfloat), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, 3 * VERTICES * sizeof(GLfloat), 4 * COLORS * sizeof(GLfloat), color);
+	glBufferSubData(GL_ARRAY_BUFFER, ((3 * VERTICES) + (4 * COLORS)) * sizeof(GLfloat), 2 * UVS * sizeof(GLfloat), uvs);
+	glUniformMatrix4fv(ID, 1, GL_FALSE, &mvp[0][0]);
+
+	// Set Active Texture .... 32 GL_TEXTURE0 .... GL_TEXTURE31
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1i(textureID, 0); // 0 .... 31
+
+							   // Set the X, Y and Z offset (this allows for multiple cubes via different shaders)
+							   // Experiment with these values to change screen positions
+	glUniform1f(x_offsetID, 0.00f);
+	glUniform1f(y_offsetID, 0.00f);
+	glUniform1f(z_offsetID, 0.00f);
+
+	// Set pointers for each parameter (with appropriate starting positions)
+	// https://www.khronos.org/opengles/sdk/docs/man/xhtml/glVertexAttribPointer.xml
+	glVertexAttribPointer(positionID, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(colorID, 4, GL_FLOAT, GL_FALSE, 0, (VOID*)(3 * VERTICES * sizeof(GLfloat)));
+	glVertexAttribPointer(uvID, 2, GL_FLOAT, GL_FALSE, 0, (VOID*)(((3 * VERTICES) + (4 * COLORS)) * sizeof(GLfloat)));
+
+	// Enable Arrays
+	glEnableVertexAttribArray(positionID);
+	glEnableVertexAttribArray(colorID);
+	glEnableVertexAttribArray(uvID);
+
+	glDrawElements(GL_TRIANGLES, 3 * INDICES, GL_UNSIGNED_INT, NULL);
+}
+
+void Game::hit(int t_position)
+{
+	if (t_position == goalPos)
+	{
+		score++;
+	}
+	else
+	{
+		lives--;
+	}
+
+	player.setLocation(vec3(0, -3, 0));
+	isFiring = false;
+
+	shuffle();
+}
+
+void Game::shuffle()
+{
+	/*player.setLocation(vec3(0, -3, 0));
+	goal.setLocation(vec3(0, -3, -15));
+	npc1.setLocation(vec3(-7, -3, -15));
+	npc2.setLocation(vec3(7, -3, -15));*/
+
+	int temp = rand() % 3 + 1;
+	int temp2;
+	int temp3;
+
+	do
+	{
+		temp2 = rand() % 3 + 1;
+	} while (temp2 == temp);
+
+	do
+	{
+		temp3 = rand() % 3 + 1;
+	} while (temp3 == temp || temp3 == temp2);
+
+	std::cout << temp << std::endl;
+
+	switch (temp)
+	{
+	case 1:
+		goal.setLocation(vec3(-7, -3, -15));
+		break;
+	case 2:
+		goal.setLocation(vec3(0, -3, -15));
+		break;
+	case 3:
+		goal.setLocation(vec3(7, -3, -15));
+		break;
+	default:
+		break;
+	}
+
+	switch (temp2)
+	{
+	case 1:
+		npc1.setLocation(vec3(-7, -3, -15));
+		break;
+	case 2:
+		npc1.setLocation(vec3(0, -3, -15));
+		break;
+	case 3:
+		npc1.setLocation(vec3(7, -3, -15));
+		break;
+	default:
+		break;
+	}
+
+	switch (temp3)
+	{
+	case 1:
+		npc2.setLocation(vec3(-7, -3, -15));
+		break;
+	case 2:
+		npc2.setLocation(vec3(0, -3, -15));
+		break;
+	case 3:
+		npc2.setLocation(vec3(7, -3, -15));
+		break;
+	default:
+		break;
+	}
+
+	goalPos = temp;
+}
